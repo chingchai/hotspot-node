@@ -1,0 +1,2 @@
+# hotspot-node
+Hotspot API
