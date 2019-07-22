@@ -1,0 +1,28 @@
+{
+  "name": "sakda_node",
+  "version": "1.0.0",
+  "description": "sakda node api  server ",
+  "main": "app.js",
+  "dependencies": {
+    "@turf/turf": "^5.1.6",
+    "bluebird": "^3.5.3",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.5",
+    "csvtojson": "^2.0.10",
+    "express": "^4.17.1",
+    "nodemon": "^1.18.10",
+    "pg": "^7.9.0",
+    "pg-promise": "^8.6.4",
+    "request": "^2.88.0",
+    "turf": "^3.0.14",
+    "xml-js": "^1.6.11",
+    "xml2js": "^0.4.19"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "sakda homhuan",
+  "license": "MIT"
+}
