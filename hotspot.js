@@ -24,7 +24,16 @@ var poly_ph = turf.polygon(json.ph.features[0].geometry.coordinates[0]);
 var poly_py = turf.polygon(json.py.features[0].geometry.coordinates[0]);
 var poly_nn = turf.polygon(json.nn.features[0].geometry.coordinates[0]);
 var poly_cr = turf.polygon(json.cr.features[0].geometry.coordinates[0]);
-var poly = turf.polygon(json.th.features[0].geometry.coordinates[0]);
+
+var poly = turf.polygon([
+    [
+        [99.36734051792395, 16.320423380302735],
+        [101.19256380509475, 16.320423380302735],
+        [101.19256380509475, 18.834396175460839],
+        [99.36734051792395, 18.834396175460839],
+        [99.36734051792395, 16.320423380302735]
+    ]
+]);
 
 
 router.get("/hp_modis", async function (req, res, next) {
