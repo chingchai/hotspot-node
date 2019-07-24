@@ -5,10 +5,6 @@ const request = require('request');
 const csv = require('csvtojson');
 const turf = require('@turf/turf');
 
-// geojson extent
-const Fs = require('fs');
-const prv = JSON.parse(Fs.readFileSync('gis_data/p4.geojson')); // feature collection of polygons
-
 //concr con = require('./conn');
 //concr db = con.th;
 
@@ -21,6 +17,9 @@ const db = new Pool({
     port: 5432,
 });
 
+// geojson extent
+const Fs = require('fs');
+const prv = JSON.parse(Fs.readFileSync('gis_data/p4.geojson')); // feature collection of polygons
 const json = require('./pv4');
 
 // ph nn py cr extent
