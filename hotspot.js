@@ -7,7 +7,7 @@ const turf = require('@turf/turf');
 
 // geojson extent
 const Fs = require('fs');
-const prv = JSON.parse(Fs.readFileSync('gis_data/map.geojson')); // feature collection of polygons
+const prv = JSON.parse(Fs.readFileSync('gis_data/p4.geojson')); // feature collection of polygons
 
 //concr con = require('./conn');
 //concr db = con.th;
