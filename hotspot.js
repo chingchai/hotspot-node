@@ -22,14 +22,29 @@ const Fs = require('fs');
 const prv = JSON.parse(Fs.readFileSync('gis_data/p4.geojson')); // feature collection of polygons
 const json = require('./pv4');
 
+// Test------------------------
+const amph = JSON.parse(Fs.readFileSync('gis_data/amp.geojson')); // feature collection of polygons
+const fire = JSON.parse(Fs.readFileSync('gis_data/fp.geojson')); // feature collection of polygons
+
 // ph nn py cr extent
 var poly_ph = turf.polygon(json.ph.features[0].geometry.coordinates[0]);
 var poly_py = turf.polygon(json.py.features[0].geometry.coordinates[0]);
 var poly_nn = turf.polygon(json.nn.features[0].geometry.coordinates[0]);
 var poly_cr = turf.polygon(json.cr.features[0].geometry.coordinates[0]);
-var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
+var poly = turf.polygon(prv.features[0].geometry.coordinates[0], prv.features[0].properties);
 
-//var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
+// Test------------------------
+var amp = turf.polygon(amph.features[0].geometry.coordinates[0], amph.features[0].properties);
+//console.log(JSON.stringify(amp));
+
+var hp = turf.multiPoint(fire.features[0].geometry.coordinates[0], fire.features[0].properties);
+
+//console.log(JSON.stringify(hp));
+           //var points = turf.featurecollection([pt1, pt2]);
+           //var polygons = turf.featurecollection([amp]);
+            var tagged = turf.tag(hp, amp, 'AP_CODE', 'AP_TN', 'latitude', 'longitude');
+            //console.log(JSON.stringify(tagged));
+
 
 router.get("/hp_modis", async function (req, res, next) {
     csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv'))

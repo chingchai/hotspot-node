@@ -4,6 +4,7 @@
   "description": "sakda node api  server ",
   "main": "app.js",
   "dependencies": {
+    "@turf/helpers": "^6.1.4",
     "@turf/turf": "^5.1.6",
     "bluebird": "^3.5.3",
     "body-parser": "^1.18.3",
