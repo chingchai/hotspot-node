@@ -20,6 +20,9 @@ const db = new Pool({
     port: 5432,
 });
 
+// geojson extent
+const Fs = require('fs');
+const prv = JSON.parse(Fs.readFileSync('gis_data/p4.geojson')); // feature collection of polygons
 const json = require('./pv4');
 const proJson = require('./geojson');
 // console.log(proJson);
@@ -94,6 +97,9 @@ router.get("/hp_test", async (req, res, next) => {
         return next(error)
     })
 })
+var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
+
+//var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
 
 router.get("/hp_modis", async function (req, res, next) {
     csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv'))
