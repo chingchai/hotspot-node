@@ -61,19 +61,19 @@
             //     L.geoJson(data).addTo(map);
             // });
 
-        var bound = L.geoJson(bnd).addTo(map);
+        //var bound = L.geoJson(bnd).addTo(map);
         //var bound = turf.polygon(bnd.features[0].geometry.coordinates[0]);
         //var boundFeatures = bound.getGeoJSON();
         
-        var pois = L.geoJson(fire).addTo(map);
+        //var pois = L.geoJson(fire).addTo(map);
         //console.log(JSON.stringify(pois));
         //var poisFeatures = pois.getGeoJSON();
 
-        var poly = turf.polygon(bnd.features[0].geometry.coordinates[0], bnd.features[0].properties);
-        console.log(JSON.stringify(poly));
+        //var poly = turf.polygon(bnd.features[0].geometry.coordinates[0], bnd.features[0].properties);
+        //console.log(JSON.stringify(poly));
 
-        var hp = turf.multiPoint(fire.features[0].geometry.coordinates[0], fire.features[0].properties);
-        console.log(JSON.stringify(hp));
+       // var hp = turf.multiPoint(fire.features[0].geometry.coordinates[0], fire.features[0].properties);
+        //console.log(JSON.stringify(hp));
 
 
         // point
@@ -97,14 +97,22 @@
                 [-81, 35]
             ]], { pop: 1000 });
 
-           //var points = turf.featuresCollection([pois]);
-            //console.log(JSON.stringify(points));
-            
-            //var polygons = turf.featuresCollection([poly1, poly2]);
-            //console.log(JSON.stringify(polygons));
+             //var points = turf.featureCollection([pt1, pt2]);
+             //console.log(points);
 
-            var tagged = turf.tag(pois, bound, 'latitude', 'longitude','bright_ti5','AP_CODE','AP_TN','PV_TN');
-            console.log(JSON.stringify(tagged));
+             //var polygons = turf.featureCollection([poly1, poly2]);
+             //console.log(polygons);
+
+             //console.log(bnd);
+             //console.log(fire);
+
+        //     var tagged = turf.tag(points, polygons, 'pop', 'population');
+        //     console.log(tagged);
+        //     //addToMap
+        //     var addToMap = [tagged, polygons]
+
+            var tagged = turf.tag(fire, bnd, 'AP_CODE','AP_TN', 'PV_TN', 'PV_CODE');
+            console.log(tagged);
 
             //L.geoJson(tagged).addTo(map);
             
