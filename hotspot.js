@@ -43,60 +43,52 @@ var poly = turf.polygon([
     ]
 ]);
 
-router.get("/hp_test", async (req, res, next) => {
-    // const lat = req.params.lat;
-    // const lon = req.params.lon;
+router.get("/hp_test", (req, res, next) => {
     const urlServer = 'http://119.59.125.191/geolab/hotspot3.csv';
     const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
-    csv().fromStream(request.get(urlServer)).then(async (data) => {
+    csv().fromStream(request.get(urlServer)).then((data) => {
         let jsonFeatures = [];
-        let ph = 0;
-        let py = 0;
-        let nn = 0;
-        let cr = 0;
         data.forEach((point) => {
             let lat = Number(point.latitude);
             let lon = Number(point.longitude);
             // console.log(point);
             let pt = turf.point([lon, lat]);
-            if (turf.booleanPointInPolygon(pt, pro) == true) {
-                // console.log(pt)
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
                 const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tambon&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
-                // let feature;
-                request(url, {
+                request({
+                    url: url,
                     json: true
                 }, (err, res, body) => {
                     point.tam = body.features[0].properties;
+                    let feature = {
+                        type: 'Feature',
+                        properties: point,
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [lon, lat]
+                        }
+                    };
+                    jsonFeatures.push(feature);
                 });
-
-                let feature = {
-                    type: 'Feature',
-                    properties: point,
-                    geometry: {
-                        type: 'Point',
-                        coordinates: [lon, lat]
-                    }
-                };
-                jsonFeatures.push(feature);
             };
         })
-        let geoJson = {
-            type: 'FeatureCollection',
-            features: jsonFeatures
-        };
-        res.status(200).json({
-            cratus: 'success',
-            ph: ph,
-            py: py,
-            nn: nn,
-            cr: cr,
-            data: geoJson,
-            message: 'retrived survey data'
-        })
+
+        setTimeout(() => {
+            let geoJson = {
+                type: 'FeatureCollection',
+                features: jsonFeatures
+            };
+            res.status(200).json({
+                cratus: 'success',
+                data: geoJson,
+                message: 'retrived survey data'
+            })
+        }, 500)
+
     }).catch((error) => {
         return next(error)
     })
-})
+});
 var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
 
 //var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
