@@ -93,7 +93,6 @@ router.get("/hpamp/:procode", (req, res, next) => {
                             }
                         };
                         jsonFeatures.push(feature);
-
                     }
                 });
             };
@@ -161,6 +160,55 @@ router.get("/hptam/:ampcode", (req, res, next) => {
         return next(error)
     })
 });
+
+router.get("/hpamp7d/:procode", (req, res, next) => {
+    const procode = req.params.procode;
+    const urlServer = 'http://119.59.125.191/geolab/hotspot.csv';
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
+    csv().fromStream(request.get(urlServer)).then((data) => {
+        let jsonFeatures = [];
+        data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:amphoe&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, (err, res, body) => {
+                    if (body.features[0].properties.pv_code === `${procode}`) {
+                        point.admin = body.features[0].properties;
+                        let feature = {
+                            type: 'Feature',
+                            properties: point,
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [lon, lat]
+                            }
+                        };
+                        jsonFeatures.push(feature);
+                    }
+                });
+            };
+        });
+        setTimeout(() => {
+            let geoJson = {
+                type: 'FeatureCollection',
+                features: jsonFeatures
+            };
+            res.status(200).json({
+                cratus: 'success',
+                data: geoJson,
+                message: 'retrived survey data'
+            })
+        }, 2500);
+    }).catch((error) => {
+        return next(error)
+    })
+});
+
 
 var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
 
