@@ -5,27 +5,214 @@ const request = require('request');
 const csv = require('csvtojson');
 const turf = require('@turf/turf');
 
-//concr con = require('./conn');
-//concr db = con.th;
-
 const Pool = require('pg').Pool
 const db = new Pool({
     user: 'postgres',
-    host: 'localhost',
+    host: '119.59.125.191',
     database: 'omfs',
-    password: '1234',
+    password: '##firehp@postgis##',
     port: 5432,
 });
 
+// geojson extent
+const Fs = require('fs');
+const prv = JSON.parse(Fs.readFileSync('gis_data/p4.geojson')); // feature collection of polygons
 const json = require('./pv4');
-
+const proJson = require('./geojson');
+// console.log(proJson);
 // ph nn py cr extent
 var poly_ph = turf.polygon(json.ph.features[0].geometry.coordinates[0]);
 var poly_py = turf.polygon(json.py.features[0].geometry.coordinates[0]);
 var poly_nn = turf.polygon(json.nn.features[0].geometry.coordinates[0]);
 var poly_cr = turf.polygon(json.cr.features[0].geometry.coordinates[0]);
-var poly = turf.polygon(json.th.features[0].geometry.coordinates[0]);
+var pro = turf.polygon(proJson.pro.features[0].geometry.coordinates[0]);
+// console.log(json.cr.features[0].geometry.coordinates[0])
+var poly = turf.polygon([
+    [
+        [99.36734051792395, 16.320423380302735],
+        [101.19256380509475, 16.320423380302735],
+        [101.19256380509475, 18.834396175460839],
+        [99.36734051792395, 18.834396175460839],
+        [99.36734051792395, 16.320423380302735]
+    ]
+]);
 
+router.get("/getamp/:procode", (req, res, next) => {
+    const procode = req.params.procode;
+    const sql = `SELECT ap_code, ap_tn, pv_code, pv_tn FROM amphoe WHERE pv_code = '${procode}'`;
+    db.query(sql).then(data => {
+        res.status(200).json({
+            status: 'success',
+            data: data.rows,
+            message: 'retrived data'
+        });
+    }).catch(err => {
+        return next(err);
+    });
+});
+
+router.get("/gettam/:ampcode", (req, res, next) => {
+    const ampcode = req.params.ampcode;
+    const sql = `SELECT tb_code, tb_tn, ap_code, ap_tn FROM tambon WHERE ap_code = '${ampcode}'`;
+    db.query(sql).then(data => {
+        res.status(200).json({
+            status: 'success',
+            data: data.rows,
+            message: 'retrived data'
+        });
+    }).catch(err => {
+        return next(err);
+    });
+});
+
+router.get("/hpamp/:procode", (req, res, next) => {
+    const procode = req.params.procode;
+    const urlServer = 'http://119.59.125.191/geolab/hotspot2.csv';
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
+    csv().fromStream(request.get(urlServer)).then((data) => {
+        let jsonFeatures = [];
+        data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:amphoe&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, (err, res, body) => {
+                    if (body.features[0].properties.pv_code === `${procode}`) {
+                        point.admin = body.features[0].properties;
+                        let feature = {
+                            type: 'Feature',
+                            properties: point,
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [lon, lat]
+                            }
+                        };
+                        jsonFeatures.push(feature);
+                    }
+                });
+            };
+        });
+        setTimeout(() => {
+            let geoJson = {
+                type: 'FeatureCollection',
+                features: jsonFeatures
+            };
+            res.status(200).json({
+                cratus: 'success',
+                data: geoJson,
+                message: 'retrived survey data'
+            })
+        }, 2500);
+    }).catch((error) => {
+        return next(error)
+    })
+});
+
+router.get("/hptam/:ampcode", (req, res, next) => {
+    const ampcode = req.params.ampcode;
+    const urlServer = 'http://119.59.125.191/geolab/hotspot2.csv';
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
+    csv().fromStream(request.get(urlServer)).then((data) => {
+        let jsonFeatures = [];
+        data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tambon&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, (err, res, body) => {
+                    if (body.features[0].properties.ap_code === `${ampcode}`) {
+                        point.admin = body.features[0].properties;
+                        let feature = {
+                            type: 'Feature',
+                            properties: point,
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [lon, lat]
+                            }
+                        };
+                        jsonFeatures.push(feature);
+                    }
+                });
+            };
+        });
+        setTimeout(() => {
+            let geoJson = {
+                type: 'FeatureCollection',
+                features: jsonFeatures
+            };
+            res.status(200).json({
+                cratus: 'success',
+                data: geoJson,
+                message: 'retrived survey data'
+            })
+        }, 2500);
+    }).catch((error) => {
+        return next(error)
+    })
+});
+
+router.get("/hpamp7d/:procode", (req, res, next) => {
+    const procode = req.params.procode;
+    const urlServer = 'http://119.59.125.191/geolab/hotspot.csv';
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
+    csv().fromStream(request.get(urlServer)).then((data) => {
+        let jsonFeatures = [];
+        data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:amphoe&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, (err, res, body) => {
+                    if (body.features[0].properties.pv_code === `${procode}`) {
+                        point.admin = body.features[0].properties;
+                        let feature = {
+                            type: 'Feature',
+                            properties: point,
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [lon, lat]
+                            }
+                        };
+                        jsonFeatures.push(feature);
+                    }
+                });
+            };
+        });
+        setTimeout(() => {
+            let geoJson = {
+                type: 'FeatureCollection',
+                features: jsonFeatures
+            };
+            res.status(200).json({
+                cratus: 'success',
+                data: geoJson,
+                message: 'retrived survey data'
+            })
+        }, 2500);
+    }).catch((error) => {
+        return next(error)
+    })
+});
+
+
+var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
+
+//var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
 
 router.get("/hp_modis", async function (req, res, next) {
     csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv'))
@@ -97,7 +284,11 @@ router.get("/hp_modis", async function (req, res, next) {
 
 router.get("/hp_modis24", async function (req, res, next) {
     //csv().fromStream(request.get('http://119.59.125.191/geolab/hotspot3.csv'))
+<<<<<<< HEAD
     csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/data/active_fire/c6/csv/MODIS_C6_SouthEast_Asia_24h.csv'))
+=======
+    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_24h.csv'))
+>>>>>>> 5a3458d57b3b186093e66471385e202d807dfb11
         .then(async (data) => {
             let jsonFeatures = [];
             let ph = 0;
