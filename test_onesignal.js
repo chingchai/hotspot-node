@@ -32,7 +32,7 @@ var sendNotification = function (data) {
 var message = {
     app_id: "79500f59-2cca-4a08-bfff-7d36712b6ec8",
     contents: {
-        "en": "English Message"
+        "en": "คำเตือน : พบจุดความร้อนในเขตพื้นที่"
     },
     included_segments: ["All"]
 };
