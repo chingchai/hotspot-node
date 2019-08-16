@@ -258,10 +258,14 @@ router.get("/insert_modis", async function (req, res, next) {
 });
 
 router.get("/onesignal24", async function (req, res, next) {
-    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_24h.csv';
-    csv().fromStream(request.get(urlFirms)).then( async (data) => {
+    const urlServer = 'http://119.59.125.191/geolab/hotspot2.csv';
+    //const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_24h.csv';
+    csv().fromStream(request.get(urlServer)).then( async (data) => {
         //console.log(data)
-        let jsonFeatures = [];
+        let jsonFeatures_py = [];
+        let jsonFeatures_cr = [];
+        let jsonFeatures_pr = [];
+        let jsonFeatures_nn = [];
          data.forEach((point) => {
             let lat = Number(point.latitude);
             let lon = Number(point.longitude);
@@ -274,31 +278,218 @@ router.get("/onesignal24", async function (req, res, next) {
                     url: url,
                     json: true
                 }, async (err, res, body) => {
+                    point.tam =  body.features[0].properties.pv_tn;
+
+               // console.log(point.tam);
+                    if ( body.features[0].properties.pv_tn == 'พะเยา'){
+                        let feature =  {
+                            properties: body.features[0].properties.pv_tn,
+                        };
+                        jsonFeatures_py.push(feature); 
+                    }
+                    if ( body.features[0].properties.pv_tn == 'เชียงราย'){
+                        let feature =  {
+                            properties: body.features[0].properties.pv_tn,
+                        };
+                        jsonFeatures_cr.push(feature); 
+                    }
+                    if ( body.features[0].properties.pv_tn == 'แพร่'){
+                        let feature =  {
+                            properties: body.features[0].properties.pv_tn,
+                        };
+                        jsonFeatures_pr.push(feature); 
+                    }
+                    if ( body.features[0].properties.pv_tn == 'น่าน'){
+                        let feature =  {
+                            properties: body.features[0].properties.pv_tn,
+                        };
+                        jsonFeatures_nn.push(feature); 
+                    }
+
                    
-                    point.tam =  body.features[0].properties;
-                    let feature =  {
-                        type: 'Feature',
-                        properties: point,
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [lon, lat]
-                        }
-                    };
-                     jsonFeatures.push(feature); 
+                   
                 });
             };
         })
 
         setTimeout(() => {
-            let geoJson =  {
-                type: 'FeatureCollection',
-                features: jsonFeatures
-            };
-             res.status(200).json({
-                cratus: 'success',
-                data: geoJson,
-                message: 'retrived survey data'
+            res.status(200).json({
+                เชียงราย: jsonFeatures_cr.length,
+                พะเยา: jsonFeatures_py.length,
+                แพร่: jsonFeatures_pr.length,
+                น่าน: jsonFeatures_nn.length
+
             })
+
+            if(jsonFeatures_py.length > 0){
+                var sendNotification = function (data) {
+                    var headers = {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": "Basic MWE1YTIxNzgtMTZjMS00NzdhLWI4ZTktMDFmMzY1NDYyODNm"
+                    };
+                
+                    var options = {
+                        host: "onesignal.com",
+                        port: 443,
+                        path: "/api/v1/notifications",
+                        method: "POST",
+                        headers: headers
+                    };
+                
+                    var https = require('https');
+                    var req = https.request(options, function (res) {
+                        res.on('data', function (data) {
+                            console.log("Response:");
+                            console.log(JSON.parse(data));
+                        });
+                    });
+                
+                    req.on('error', function (e) {
+                        console.log("ERROR:");
+                        console.log(e);
+                    });
+                
+                    req.write(JSON.stringify(data));
+                    req.end();
+                };
+                
+                var message = {
+                    app_id: "79500f59-2cca-4a08-bfff-7d36712b6ec8",
+                    contents: {
+                        "en": "คำเตือน : พบจุดความร้อนในเขตพื้นที่จังหวัดพะเยา จำนวน "+jsonFeatures_py.length+" จุด"
+                    },
+                    included_segments: ["All"]
+                };
+                
+                sendNotification(message);
+            }
+            if(jsonFeatures_cr.length > 0){
+                var sendNotification = function (data) {
+                    var headers = {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": "Basic YjNlMGQwOTItZDc0OS00NTEyLWJiMjctNTA4MmM4MGMwZGZi"
+                    };
+                
+                    var options = {
+                        host: "onesignal.com",
+                        port: 443,
+                        path: "/api/v1/notifications",
+                        method: "POST",
+                        headers: headers
+                    };
+                
+                    var https = require('https');
+                    var req = https.request(options, function (res) {
+                        res.on('data', function (data) {
+                            console.log("Response:");
+                            console.log(JSON.parse(data));
+                        });
+                    });
+                
+                    req.on('error', function (e) {
+                        console.log("ERROR:");
+                        console.log(e);
+                    });
+                
+                    req.write(JSON.stringify(data));
+                    req.end();
+                };
+                
+                var message = {
+                    app_id: "ea4c69a5-c253-4025-815f-85648d07726f",
+                    contents: {
+                        "en": "คำเตือน : พบจุดความร้อนในเขตพื้นที่จังหวัดเชียงราย จำนวน "+jsonFeatures_cr.length+" จุด"
+                    },
+                    included_segments: ["All"]
+                };
+                
+                sendNotification(message);
+            }
+            if(jsonFeatures_pr.length > 0){
+                var sendNotification = function (data) {
+                    var headers = {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": "Basic OTdiZjhmYTAtYTVmMy00YWE4LWJkNTktMjQxZWU2NzMzNTU3"
+                    };
+                
+                    var options = {
+                        host: "onesignal.com",
+                        port: 443,
+                        path: "/api/v1/notifications",
+                        method: "POST",
+                        headers: headers
+                    };
+                
+                    var https = require('https');
+                    var req = https.request(options, function (res) {
+                        res.on('data', function (data) {
+                            console.log("Response:");
+                            console.log(JSON.parse(data));
+                        });
+                    });
+                
+                    req.on('error', function (e) {
+                        console.log("ERROR:");
+                        console.log(e);
+                    });
+                
+                    req.write(JSON.stringify(data));
+                    req.end();
+                };
+                
+                var message = {
+                    app_id: "c2732646-0e7a-4ea3-a53c-9409d2cfda7d",
+                    contents: {
+                        "en": "คำเตือน : พบจุดความร้อนในเขตพื้นที่จังหวัดแพร่ จำนวน "+jsonFeatures_pr.length+" จุด"
+                    },
+                    included_segments: ["All"]
+                };
+                
+                sendNotification(message);
+            }
+            if(jsonFeatures_nn.length > 0){
+                var sendNotification = function (data) {
+                    var headers = {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": "Basic NmU5MTdjY2MtYjhmNi00M2QyLWJjZTQtNjFiM2JjM2EyOThm"
+                    };
+                
+                    var options = {
+                        host: "onesignal.com",
+                        port: 443,
+                        path: "/api/v1/notifications",
+                        method: "POST",
+                        headers: headers
+                    };
+                
+                    var https = require('https');
+                    var req = https.request(options, function (res) {
+                        res.on('data', function (data) {
+                            console.log("Response:");
+                            console.log(JSON.parse(data));
+                        });
+                    });
+                
+                    req.on('error', function (e) {
+                        console.log("ERROR:");
+                        console.log(e);
+                    });
+                
+                    req.write(JSON.stringify(data));
+                    req.end();
+                };
+                
+                var message = {
+                    app_id: "51d3803e-864f-4498-8990-d9ee471ea60b",
+                    contents: {
+                        "en": "คำเตือน : พบจุดความร้อนในเขตพื้นที่จังหวัดน่าน จำนวน "+jsonFeatures_nn.length+" จุด"
+                    },
+                    included_segments: ["All"]
+                };
+                
+                sendNotification(message);
+            }
+
         }, 2500)
 
     }).catch((error) => {
