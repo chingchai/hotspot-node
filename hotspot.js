@@ -68,8 +68,8 @@ router.get("/gettam/:ampcode", (req, res, next) => {
 router.get("/hpamp/:procode", (req, res, next) => {
     const procode = req.params.procode;
     const urlServer = 'http://119.59.125.191/geolab/hotspot2.csv';
-    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
-    csv().fromStream(request.get(urlServer)).then((data) => {
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_24h.csv';
+    csv().fromStream(request.get(urlFirms)).then((data) => {
         let jsonFeatures = [];
         data.forEach((point) => {
             let lat = Number(point.latitude);
@@ -116,8 +116,8 @@ router.get("/hpamp/:procode", (req, res, next) => {
 router.get("/hptam/:ampcode", (req, res, next) => {
     const ampcode = req.params.ampcode;
     const urlServer = 'http://119.59.125.191/geolab/hotspot2.csv';
-    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
-    csv().fromStream(request.get(urlServer)).then((data) => {
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_24h.csv';
+    csv().fromStream(request.get(urlFirms)).then((data) => {
         let jsonFeatures = [];
         data.forEach((point) => {
             let lat = Number(point.latitude);
@@ -165,7 +165,7 @@ router.get("/hpamp7d/:procode", (req, res, next) => {
     const procode = req.params.procode;
     const urlServer = 'http://119.59.125.191/geolab/hotspot.csv';
     const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
-    csv().fromStream(request.get(urlServer)).then((data) => {
+    csv().fromStream(request.get(urlFirms)).then((data) => {
         let jsonFeatures = [];
         data.forEach((point) => {
             let lat = Number(point.latitude);
@@ -214,30 +214,17 @@ var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
 
 //var poly = turf.polygon(prv.features[0].geometry.coordinates[0]);
 
-router.get("/hp_modis", async function (req, res, next) {
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv'))
-        // csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv'))
-        .then(async (data) => {
-
+router.get("/insert_modis", async function (req, res, next) {
+        const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
+        csv().fromStream(request.get(urlFirms)).then( async (data) => {
             let jsonFeatures = [];
-            let ph = 0;
-            let py = 0;
-            let nn = 0;
-            let cr = 0;
             data.forEach((point) => {
-                // let lat = Number(point.latitnne);
-                // let lon = Number(point.longitnne);
-                //console.log(data);  
                 let lat = Number(point.latitude);
                 let lon = Number(point.longitude);
+                // console.log(point);
                 let pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, poly_ph) == true) ph += 1;
-                if (turf.booleanPointInPolygon(pt, poly_py) == true) py += 1;
-                if (turf.booleanPointInPolygon(pt, poly_nn) == true) nn += 1;
-                if (turf.booleanPointInPolygon(pt, poly_cr) == true) cr += 1;
-                if (turf.booleanPointInPolygon(pt, poly) == true) {
-
-                    let feature = {
+                if (turf.booleanPointInPolygon(pt, pro) === true) {
+                   let feature = {
                         type: 'Feature',
                         properties: point,
                         geometry: {
@@ -246,22 +233,14 @@ router.get("/hp_modis", async function (req, res, next) {
                         }
                     };
                     jsonFeatures.push(feature);
-                    //console.log(feature); 
                     const sql = {
-                        text: 'INSERT INTO hp_modis(latitude, longitude, brightness, scan, track, acq_date, acq_time, satellite, instrument, confidence, version, bright_t31, frp, daynight) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
-                        //values: [point.latitude, point.longitude, point.brightness, point.scan, point.track, point.acq_date, point.acq_time, point.satellite, point.instrument, point.confidence, point.version, point.bright_t31, point.frp, point.daynight ],
+                        text: 'INSERT INTO rt_modis(latitude, longitude, brightness, scan, track, acq_date, acq_time, satellite, instrument, confidence, version, bright_t31, frp, daynight) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
+
                         values: [point.latitude, point.longitude, point.brightness, point.scan, point.track, point.acq_date, point.acq_time, point.satellite, point.instrument, point.confidence, point.version, point.bright_t31, point.frp, point.daynight],
                     }
                     db.query(sql)
 
                 }
-                //const sql = `INSERT INTO hp_modis (latitude, longitude, brightness, scan, track, acq_date, acq_time, satellite, instrument, confidence, version, bright_t31, frp) VALUES (data.latitude, data.longitude, data.brightness, data.scan, data.track, data.acq_date, 'data.acq_time', 'data.satellite', 'data.instrument', 'data.confidence', 'data.version', data.bright_t31, data.frp)`;
-                //var user = req.body;
-                //const sql = {
-                // text: 'INSERT INTO hp_modis(latitude, longitude, brightness, scan, track, acq_date, acq_time, satellite, instrument, confidence, version, bright_t31, frp, daynight) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
-                //values: [point.latitude, point.longitude, point.brightness, point.scan, point.track, point.acq_date, point.acq_time, point.satellite, point.instrument, point.confidence, point.version, point.bright_t31, point.frp, point.daynight ],   
-                //}
-                // db.query(sql)
 
             });
             let geoJson = {
@@ -270,10 +249,6 @@ router.get("/hp_modis", async function (req, res, next) {
             };
             await res.status(200).json({
                 cratus: 'success',
-                ph: ph,
-                py: py,
-                nn: nn,
-                cr: cr,
                 data: geoJson,
                 message: 'retrived survey data'
             })
@@ -282,31 +257,26 @@ router.get("/hp_modis", async function (req, res, next) {
         })
 });
 
-router.get("/hp_modis24", async function (req, res, next) {
-    //csv().fromStream(request.get('http://119.59.125.191/geolab/hotspot3.csv'))
-<<<<<<< HEAD
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/data/active_fire/c6/csv/MODIS_C6_SouthEast_Asia_24h.csv'))
-=======
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_24h.csv'))
->>>>>>> 5a3458d57b3b186093e66471385e202d807dfb11
-        .then(async (data) => {
-            let jsonFeatures = [];
-            let ph = 0;
-            let py = 0;
-            let nn = 0;
-            let cr = 0;
-            data.forEach((point) => {
-
-                let lat = Number(point.latitude);
-                let lon = Number(point.longitude);
-                let pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, poly_ph) == true) ph += 1;
-                if (turf.booleanPointInPolygon(pt, poly_py) == true) py += 1;
-                if (turf.booleanPointInPolygon(pt, poly_nn) == true) nn += 1;
-                if (turf.booleanPointInPolygon(pt, poly_cr) == true) cr += 1;
-                if (turf.booleanPointInPolygon(pt, poly) == true) {
-
-                    let feature = {
+router.get("/onesignal24", async function (req, res, next) {
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_24h.csv';
+    csv().fromStream(request.get(urlFirms)).then( async (data) => {
+        //console.log(data)
+        let jsonFeatures = [];
+         data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url =  `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tambon&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                //const url =  `gis_data/tambon.geojson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, async (err, res, body) => {
+                   
+                    point.tam =  body.features[0].properties;
+                    let feature =  {
                         type: 'Feature',
                         properties: point,
                         geometry: {
@@ -314,339 +284,446 @@ router.get("/hp_modis24", async function (req, res, next) {
                             coordinates: [lon, lat]
                         }
                     };
-                    jsonFeatures.push(feature);
-                }
+                     jsonFeatures.push(feature); 
+                });
+            };
+        })
 
-            });
-            let geoJson = {
+        setTimeout(() => {
+            let geoJson =  {
                 type: 'FeatureCollection',
                 features: jsonFeatures
             };
-            await res.status(200).json({
+             res.status(200).json({
                 cratus: 'success',
-                ph: ph,
-                py: py,
-                nn: nn,
-                cr: cr,
                 data: geoJson,
                 message: 'retrived survey data'
             })
-        }).catch((error) => {
-            return next(error)
+        }, 2500)
+
+    }).catch((error) => {
+        return next(error)
+    })
+});
+
+router.get("/hp_modis24", async function (req, res, next) {
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_24h.csv';
+    csv().fromStream(request.get(urlFirms)).then( async (data) => {
+        //console.log(data)
+        let jsonFeatures = [];
+         data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url =  `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tambon&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                //const url =  `gis_data/tambon.geojson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, async (err, res, body) => {
+                   
+                    point.tam =  body.features[0].properties;
+                    let feature =  {
+                        type: 'Feature',
+                        properties: point,
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [lon, lat]
+                        }
+                    };
+                     jsonFeatures.push(feature); 
+                });
+            };
         })
+
+        setTimeout(() => {
+            let geoJson =  {
+                type: 'FeatureCollection',
+                features: jsonFeatures
+            };
+             res.status(200).json({
+                cratus: 'success',
+                data: geoJson,
+                message: 'retrived survey data'
+            })
+        }, 2500)
+
+    }).catch((error) => {
+        return next(error)
+    })
 });
 
 
 router.get("/hp_modis48", async function (req, res, next) {
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_48h.csv'))
-        // csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv'))
-        .then(async (data) => {
-
+        const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_48h.csv';
+        csv().fromStream(request.get(urlFirms)).then((data) => {
             let jsonFeatures = [];
-            let ph = 0;
-            let py = 0;
-            let nn = 0;
-            let cr = 0;
             data.forEach((point) => {
                 let lat = Number(point.latitude);
                 let lon = Number(point.longitude);
+                // console.log(point);
                 let pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, poly_ph) == true) ph += 1;
-                if (turf.booleanPointInPolygon(pt, poly_py) == true) py += 1;
-                if (turf.booleanPointInPolygon(pt, poly_nn) == true) nn += 1;
-                if (turf.booleanPointInPolygon(pt, poly_cr) == true) cr += 1;
-                if (turf.booleanPointInPolygon(pt, poly) == true) {
-
-                    let feature = {
-                        type: 'Feature',
-                        properties: point,
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [lon, lat]
-                        }
-                    };
-                    jsonFeatures.push(feature);
-                }
-
-            });
-            let geoJson = {
-                type: 'FeatureCollection',
-                features: jsonFeatures
-            };
-            await res.status(200).json({
-                cratus: 'success',
-                ph: ph,
-                py: py,
-                nn: nn,
-                cr: cr,
-                data: geoJson,
-                message: 'retrived survey data'
+                if (turf.booleanPointInPolygon(pt, pro) === true) {
+                    const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tambon&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                    request({
+                        url: url,
+                        json: true
+                    }, (err, res, body) => {
+                        point.tam = body.features[0].properties;
+                        let feature = {
+                            type: 'Feature',
+                            properties: point,
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [lon, lat]
+                            }
+                        };
+                        jsonFeatures.push(feature);
+                    });
+                };
             })
+    
+            setTimeout(() => {
+                let geoJson = {
+                    type: 'FeatureCollection',
+                    features: jsonFeatures
+                };
+                res.status(200).json({
+                    cratus: 'success',
+                    data: geoJson,
+                    message: 'retrived survey data'
+                })
+            }, 2500)
+    
         }).catch((error) => {
             return next(error)
         })
+});
+
+router.get("/insert_modis48", async function (req, res, next) {
+    // const urlServer = 'http://119.59.125.191/geolab/hotspot2.csv';
+     const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_48h.csv';
+    
+    const drp = `DROP TABLE IF EXISTS rt_modis48;
+
+    CREATE TABLE rt_modis48
+    (
+        gid SERIAL,
+        latitude numeric,
+        longitude numeric,
+        brightness numeric,
+        scan numeric,
+        track numeric,
+        acq_date date,
+        acq_time character varying(4),
+        satellite character varying(5),
+        instrument character varying(5),
+        confidence numeric,
+        version character varying(6),
+        bright_t31 numeric,
+        frp numeric,
+        tb_code character varying(6),
+        tb_tn character varying(78),
+        tb_en character varying(50),
+        ap_code character varying(4),
+        ap_tn character varying(60),
+        ap_en character varying(50),
+        pv_code character varying(2),
+        pv_tn character varying(50),
+        pv_en character varying(50),
+        re_nesdb character varying(50),
+        re_royin character varying(50),
+        admin_type numeric,
+        daynight character varying(1),
+        status character varying(254),
+        CONSTRAINT rt_modis48_pkey PRIMARY KEY (gid) )`;
+
+    db.query(drp)
+
+    csv().fromStream(request.get(urlFirms)).then( async (data) => {
+         let jsonFeatures = [];
+         data.forEach((point) => {
+        let lat = Number(point.latitude);
+        let lon = Number(point.longitude);
+        // console.log(point);
+        let pt = turf.point([lon, lat]);
+        if (turf.booleanPointInPolygon(pt, pro) === true) {
+            const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tambon&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+            request({
+                url: url,
+                json: true
+            }, (err, res, body) => {
+                point.tam = body.features[0].properties;
+                let feature = {
+                    type: 'Feature',
+                    properties: point,
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [lon, lat]
+                    }
+                };
+                jsonFeatures.push(feature);
+
+                const sql = {
+                    text: 'INSERT INTO rt_modis48(latitude, longitude, brightness, scan, track, acq_date, acq_time, satellite, instrument, confidence, version, bright_t31, frp, tb_code, tb_tn, tb_en, ap_code, ap_tn, ap_en, pv_code, pv_tn, pv_en, re_nesdb, re_royin, admin_type, daynight,status) \
+                     VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26,$27)',
+
+                    values: [point.latitude, point.longitude, point.brightness, point.scan, point.track, point.acq_date, point.acq_time, point.satellite, point.instrument, point.confidence, point.version, point.bright_t31, point.frp, point.tam.tb_code, point.tam.tb_tn, point.tam.tb_en, point.tam.ap_code, point.tam.ap_tn, point.tam.ap_en, point.tam.pv_code, point.tam.pv_tn, point.tam.pv_en, point.tam.re_nesdb, point.tam.re_royin, point.tam.admin_type, point.daynight,'type3'],
+                }
+                db.query(sql)
+
+            });
+        };
+    })
+
+    setTimeout(() => {
+        let geoJson = {
+            type: 'FeatureCollection',
+            features: jsonFeatures
+        };
+        res.status(200).json({
+            cratus: 'success',
+            data: geoJson,
+            message: 'retrived survey data'
+        })
+    }, 2500)
+
+
+     }).catch((error) => {
+         return next(error)
+     })
 });
 
 router.get("/hp_modis7", async function (req, res, next) {
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv'))
-        // csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv'))
-        .then(async (data) => {
-
+        const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/text/MODIS_C6_SouthEast_Asia_7d.csv';
+        csv().fromStream(request.get(urlFirms)).then((data) => {
             let jsonFeatures = [];
-            let ph = 0;
-            let py = 0;
-            let nn = 0;
-            let cr = 0;
             data.forEach((point) => {
                 let lat = Number(point.latitude);
                 let lon = Number(point.longitude);
+                // console.log(point);
                 let pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, poly_ph) == true) ph += 1;
-                if (turf.booleanPointInPolygon(pt, poly_py) == true) py += 1;
-                if (turf.booleanPointInPolygon(pt, poly_nn) == true) nn += 1;
-                if (turf.booleanPointInPolygon(pt, poly_cr) == true) cr += 1;
-                if (turf.booleanPointInPolygon(pt, poly) == true) {
-
-                    let feature = {
-                        type: 'Feature',
-                        properties: point,
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [lon, lat]
-                        }
-                    };
-                    jsonFeatures.push(feature);
-
-                }
-
-            });
-            let geoJson = {
-                type: 'FeatureCollection',
-                features: jsonFeatures
-            };
-            await res.status(200).json({
-                cratus: 'success',
-                ph: ph,
-                py: py,
-                nn: nn,
-                cr: cr,
-                data: geoJson,
-                message: 'retrived survey data'
+                if (turf.booleanPointInPolygon(pt, pro) === true) {
+                    const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tambon&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                    request({
+                        url: url,
+                        json: true
+                    }, (err, res, body) => {
+                        point.tam = body.features[0].properties;
+                        let feature = {
+                            type: 'Feature',
+                            properties: point,
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [lon, lat]
+                            }
+                        };
+                        jsonFeatures.push(feature);
+                    });
+                };
             })
+    
+            setTimeout(() => {
+                let geoJson = {
+                    type: 'FeatureCollection',
+                    features: jsonFeatures
+                };
+                res.status(200).json({
+                    cratus: 'success',
+                    data: geoJson,
+                    message: 'retrived survey data'
+                })
+            }, 2500)
+    
         }).catch((error) => {
             return next(error)
         })
 });
 
-router.get("/hp_viirs", async function (req, res, next) {
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/viirs/text/VNP14IMGTDL_NRT_SouthEast_Asia_7d.csv'))
-        .then(async (data) => {
-            let jsonFeatures = [];
-            let ph = 0;
-            let py = 0;
-            let nn = 0;
-            let cr = 0;
-            data.forEach(function (point) {
-                let lat = Number(point.latitude);
-                let lon = Number(point.longitude);
-                let pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, poly_ph) == true) ph += 1;
-                if (turf.booleanPointInPolygon(pt, poly_py) == true) py += 1;
-                if (turf.booleanPointInPolygon(pt, poly_nn) == true) nn += 1;
-                if (turf.booleanPointInPolygon(pt, poly_cr) == true) cr += 1;
-                if (turf.booleanPointInPolygon(pt, poly) == true) {
+router.get("/insert_viirs", async function (req, res, next) {
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/viirs/text/VNP14IMGTDL_NRT_SouthEast_Asia_7d.csv';
+    csv().fromStream(request.get(urlFirms)).then( async (data) => {
+        let jsonFeatures = [];
+        data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                   let feature = {
+                    type: 'Feature',
+                    properties: point,
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [lon, lat]
 
-
-                    let feature = {
-                        type: 'Feature',
-                        properties: point,
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [lon, lat]
-
-                        }
-                    };
-                    jsonFeatures.push(feature);
-
-                    const sql = {
-                        text: 'INSERT INTO hp_modis(latitude, longitude, bright_ti4, scan, track, acq_date, acq_time, satellite, instrument, confidence, version, bright_ti5, frp, daynight) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
-                        values: [point.latitude, point.longitude, point.bright_ti4, point.scan, point.track, point.acq_date, point.acq_time, point.satellite, point.instrument, point.confidence, point.version, point.bright_ti5, point.frp, point.daynight],
                     }
-                    db.query(sql)
+                };
+                jsonFeatures.push(feature);
 
+                const sql = {
+                    text: 'INSERT INTO rt_viirs(latitude, longitude, bright_ti4, scan, track, acq_date, acq_time, satellite, instrument, confidence, version, bright_ti5, frp, daynight) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
+                    values: [point.latitude, point.longitude, point.bright_ti4, point.scan, point.track, point.acq_date, point.acq_time, point.satellite, point.instrument, point.confidence, point.version, point.bright_ti5, point.frp, point.daynight],
                 }
+                db.query(sql)
 
-            });
-            let geoJson = {
-                type: 'FeatureCollection',
-                features: jsonFeatures
-            };
-            await res.status(200).json({
-                cratus: 'success',
-                ph: ph,
-                py: py,
-                nn: nn,
-                cr: cr,
-                data: geoJson,
-                message: 'retrived survey data'
-            });
+            }
 
-        }).catch((error) => {
-            return next(error)
-        })
+        });
+        let geoJson = {
+            type: 'FeatureCollection',
+            features: jsonFeatures
+        };
+        await res.status(200).json({
+            cratus: 'success',
+            data: geoJson,
+            message: 'retrived survey data'
+        });
+
+    }).catch((error) => {
+        return next(error)
+    })
 });
 
 router.get("/hp_viirs24", async function (req, res, next) {
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/viirs/text/VNP14IMGTDL_NRT_SouthEast_Asia_24h.csv'))
-        .then(async (data) => {
-            let jsonFeatures = [];
-            let ph = 0;
-            let py = 0;
-            let nn = 0;
-            let cr = 0;
-            data.forEach(function (point) {
-                let lat = Number(point.latitude);
-                let lon = Number(point.longitude);
-                let pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, poly_ph) == true) ph += 1;
-                if (turf.booleanPointInPolygon(pt, poly_py) == true) py += 1;
-                if (turf.booleanPointInPolygon(pt, poly_nn) == true) nn += 1;
-                if (turf.booleanPointInPolygon(pt, poly_cr) == true) cr += 1;
-                if (turf.booleanPointInPolygon(pt, poly) == true) {
-
-
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/viirs/text/VNP14IMGTDL_NRT_SouthEast_Asia_24h.csv';
+    csv().fromStream(request.get(urlFirms)).then((data) => {
+        let jsonFeatures = [];
+         data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tam_forest&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, (err, res, body) => {
+                    //console.log(body.features)
+                    point.tam = body.features;
                     let feature = {
                         type: 'Feature',
                         properties: point,
                         geometry: {
                             type: 'Point',
                             coordinates: [lon, lat]
-
                         }
                     };
                     jsonFeatures.push(feature);
-                }
+                });
+            };
+        })
 
-            });
+        setTimeout(() => {
             let geoJson = {
                 type: 'FeatureCollection',
                 features: jsonFeatures
             };
-            await res.status(200).json({
+            res.status(200).json({
                 cratus: 'success',
-                ph: ph,
-                py: py,
-                nn: nn,
-                cr: cr,
                 data: geoJson,
                 message: 'retrived survey data'
-            });
+            })
+        }, 2500)
 
-        }).catch((error) => {
-            return next(error)
-        })
+    }).catch((error) => {
+        return next(error)
+    })
 });
 
 router.get("/hp_viirs48", async function (req, res, next) {
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/viirs/text/VNP14IMGTDL_NRT_SouthEast_Asia_48h.csv'))
-        .then(async (data) => {
-            let jsonFeatures = [];
-            let ph = 0;
-            let py = 0;
-            let nn = 0;
-            let cr = 0;
-            data.forEach(function (point) {
-                let lat = Number(point.latitude);
-                let lon = Number(point.longitude);
-                let pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, poly_ph) == true) ph += 1;
-                if (turf.booleanPointInPolygon(pt, poly_py) == true) py += 1;
-                if (turf.booleanPointInPolygon(pt, poly_nn) == true) nn += 1;
-                if (turf.booleanPointInPolygon(pt, poly_cr) == true) cr += 1;
-                if (turf.booleanPointInPolygon(pt, poly) == true) {
-
-
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/viirs/text/VNP14IMGTDL_NRT_SouthEast_Asia_48h.csv';
+    csv().fromStream(request.get(urlFirms)).then((data) => {
+        let jsonFeatures = [];
+        data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tam_forest&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, (err, res, body) => {
+                    point.tam = body.features[0].properties;
                     let feature = {
                         type: 'Feature',
                         properties: point,
                         geometry: {
                             type: 'Point',
                             coordinates: [lon, lat]
-
                         }
                     };
                     jsonFeatures.push(feature);
-                }
+                });
+            };
+        })
 
-            });
+        setTimeout(() => {
             let geoJson = {
                 type: 'FeatureCollection',
                 features: jsonFeatures
             };
-            await res.status(200).json({
+            res.status(200).json({
                 cratus: 'success',
-                ph: ph,
-                py: py,
-                nn: nn,
-                cr: cr,
                 data: geoJson,
                 message: 'retrived survey data'
-            });
+            })
+        }, 2500)
 
-        }).catch((error) => {
-            return next(error)
-        })
+    }).catch((error) => {
+        return next(error)
+    })
 });
 
 router.get("/hp_viirs7", async function (req, res, next) {
-    csv().fromStream(request.get('https://firms.modaps.eosdis.nasa.gov/active_fire/viirs/text/VNP14IMGTDL_NRT_SouthEast_Asia_7d.csv'))
-        .then(async (data) => {
-            let jsonFeatures = [];
-            let ph = 0;
-            let py = 0;
-            let nn = 0;
-            let cr = 0;
-            data.forEach(function (point) {
-                let lat = Number(point.latitude);
-                let lon = Number(point.longitude);
-                let pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, poly_ph) == true) ph += 1;
-                if (turf.booleanPointInPolygon(pt, poly_py) == true) py += 1;
-                if (turf.booleanPointInPolygon(pt, poly_nn) == true) nn += 1;
-                if (turf.booleanPointInPolygon(pt, poly_cr) == true) cr += 1;
-                if (turf.booleanPointInPolygon(pt, poly) == true) {
-
-
+    const urlFirms = 'https://firms.modaps.eosdis.nasa.gov/active_fire/viirs/text/VNP14IMGTDL_NRT_SouthEast_Asia_7d.csv';
+    csv().fromStream(request.get(urlFirms)).then((data) => {
+        let jsonFeatures = [];
+        data.forEach((point) => {
+            let lat = Number(point.latitude);
+            let lon = Number(point.longitude);
+            // console.log(point);
+            let pt = turf.point([lon, lat]);
+            if (turf.booleanPointInPolygon(pt, pro) === true) {
+                const url = `http://119.59.125.191/geoserver/omfs/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=omfs:tam_forest&outputFormat=application%2Fjson&CQL_FILTER=INTERSECTS(geom,Point(${lon}%20${lat}))`;
+                request({
+                    url: url,
+                    json: true
+                }, (err, res, body) => {
+                    point.tam = body.features[0].properties;
                     let feature = {
                         type: 'Feature',
                         properties: point,
                         geometry: {
                             type: 'Point',
                             coordinates: [lon, lat]
-
                         }
                     };
                     jsonFeatures.push(feature);
-                }
+                });
+            };
+        })
 
-            });
+        setTimeout(() => {
             let geoJson = {
                 type: 'FeatureCollection',
                 features: jsonFeatures
             };
-            await res.status(200).json({
+            res.status(200).json({
                 cratus: 'success',
-                ph: ph,
-                py: py,
-                nn: nn,
-                cr: cr,
                 data: geoJson,
                 message: 'retrived survey data'
-            });
+            })
+        }, 2500)
 
-        }).catch((error) => {
-            return next(error)
-        })
+    }).catch((error) => {
+        return next(error)
+    })
 });
 
 module.exports = router;
